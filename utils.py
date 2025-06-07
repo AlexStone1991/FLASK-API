@@ -108,7 +108,8 @@ def get_group_by_id(group_id: int) -> Optional[Groups]:
         group = Groups.get(Groups.id == group_id)
         return group
     except DoesNotExist:
-        return None
+        print(f"Группа с ID {group_id} не найдена.")
+        raise
 
 
 def create_group(group_name: str) -> Groups:
@@ -145,10 +146,23 @@ def update_group_id(group_id: int, new_group_name: str) -> Optional[Groups]:
     Обновляет имя группы по ID.
     """
     try:
+        # Сначала проверим, что группа существует
         group = Groups.get(Groups.id == group_id)
-        group.group_name = new_group_name
-        group.save()
-        return group
+
+        # Выполняем атомарное обновление
+        rows_updated = (
+            Groups.update(group_name=new_group_name)
+            .where(Groups.id == group_id)
+            .execute()
+        )
+
+        if rows_updated == 0:
+            raise DoesNotExist("Группа не найдена")
+
+        # Получаем обновленную группу
+        updated_group = Groups.get(Groups.id == group_id)
+        return updated_group
+
     except DoesNotExist:
         print("Группа не найдена.")
         raise
@@ -199,7 +213,7 @@ def get_student_by_id(
             query = query.join(Groups)
 
         student = query.where(Students.id == student_id).get()
-        return serialize_model_instance(student, expand_fields)
+        return student
     except DoesNotExist:
         return None
 
@@ -242,7 +256,7 @@ def create_student(
             updated_at=datetime.datetime.now(),
         )
 
-        return serialize_model_instance(student)
+        return student
 
     except DoesNotExist:
         print(f"Группа с ID {group_id} не найдена.")

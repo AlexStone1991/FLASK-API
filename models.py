@@ -1,18 +1,16 @@
-"""
-Структрура базы данных для ORM
-
-"""
-
 from peewee import *
 import datetime
 
 db = SqliteDatabase("academy_orm.db")
 
-
 # Группы
 class Groups(Model):
     group_name = CharField(unique=True, null=False, max_length=50)
     created_at = DateTimeField(default=datetime.datetime.now)
+    updated_at = DateTimeField(default=datetime.datetime.now)
+
+    def __str__(self):
+        return str(self.group_name)
 
     class Meta:
         database = db
@@ -27,6 +25,9 @@ class Students(Model):
     notes = TextField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
+
+    def __str__(self):
+        return f"{self.first_name} {self.middle_name or ''} {self.last_name} {self.group_id.group_name}"
 
     class Meta:
         database = db
