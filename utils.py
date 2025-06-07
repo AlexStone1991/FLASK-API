@@ -50,6 +50,41 @@ from peewee import DoesNotExist, IntegrityError
 import json
 import datetime
 from typing import Optional, List, Dict, Any
+from api_keys import users
+from typing import Literal
+
+# функция которая применяет request и роль и возвращает TRUE если у пользователя есть доступ, иначе False
+def check_access(request, role: Literal["admin", "moderator", "user"]) -> bool:
+    """
+    Проверяет доступ пользователя на основе его роли и API ключа.
+    Args:
+        request: Объект запроса, содержащий заголовки
+        role: Роль пользователя (admin, moderator, user)
+
+    Returns:
+        bool True, если пользователь имет доступ, иначе False.
+    """
+    api_key = request.headers.get("X-API-Key")
+    # 1. найти пользователя
+    try:
+        user = next(user for user in users if user["api_key"] == api_key)
+    except StopIteration:
+        return False # Пользователь не найден
+    
+    # 2. проверить роль пользователя
+    user_role = user["role"] #получаем роль пользователя
+
+    # 3. если пользователь admin то он имеет доступ к любым данным
+    if user_role == "admin":
+        return True #доступ разрешен
+    # 4. если пользователь moderator то он имеет доступ к данным только своей роли
+    if user_role == "moderator" and role in ["moderator", "user"]:
+        return True #доступ разрешен
+    # 5. если пользователь user то он имеет доступ только к своим данным
+    if user_role == "user" and role == "user":
+        return True #доступ разрешен
+    else:
+        return False #доступ запрещен
 
 
 # Улучшенная функция сериализации с поддержкой expand для связанных объектов
