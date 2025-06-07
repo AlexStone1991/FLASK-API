@@ -1,4 +1,5 @@
-academy_orm.db
+academy_orm.db 
 .venv/
 *__pycache__
 /*/.db
+.db
